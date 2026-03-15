@@ -25,7 +25,8 @@ export default async function handler(req, res) {
   "./documents/course_outline_2026.pdf",
   "./documents/buyer_system_presentation.pdf",
   "./documents/residential_condominium_contract.pdf",
-  "./documents/seller_system_presentation.pdf"
+  "./documents/seller_system_presentation.pdf",
+  "./documents/shanae_job_description_2025.pdf"
 ];
 
     for (const file of pdfFiles) {
@@ -40,7 +41,6 @@ export default async function handler(req, res) {
 
     const docxFiles = [
   "./documents/first_draft_emails.docx",
-  "./documents/shanae_job_description_2025.pdf"
 ];
 
     for (const file of docxFiles) {
