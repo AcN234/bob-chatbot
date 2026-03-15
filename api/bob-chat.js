@@ -21,11 +21,12 @@ export default async function handler(req, res) {
 
     // ---------- READ PDF FILES ----------
 
-    const pdfFiles = [
-      "./documents/2024_Course_Outline.pdf",
-      "./documents/CMA_Buildings.pdf",
-      "./documents/Revised_Residential_Condominium.pdf"
-    ];
+   const pdfFiles = [
+  "./documents/course_outline_2026.pdf",
+  "./documents/buyer_system_presentation.pdf",
+  "./documents/residential_condominium_contract.pdf",
+  "./documents/seller_system_presentation.pdf"
+];
 
     for (const file of pdfFiles) {
       if (fs.existsSync(file)) {
@@ -38,11 +39,9 @@ export default async function handler(req, res) {
     // ---------- READ DOCX FILES ----------
 
     const docxFiles = [
-      "./documents/First_Draft_of_emails.docx",
-      "./documents/Shanae_Job_Description_2025.docx",
-      "./documents/2025_Buyers_systems_v2.docx",
-      "./documents/2025_Seller_Systems.docx"
-    ];
+  "./documents/first_draft_emails.docx",
+  "./documents/shanae_job_description_2025.pdf"
+];
 
     for (const file of docxFiles) {
       if (fs.existsSync(file)) {
