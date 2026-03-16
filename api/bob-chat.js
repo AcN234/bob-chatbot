@@ -1,7 +1,13 @@
 import OpenAI from "openai";
-import fs from "fs";
-import pdf from "pdf-parse";
-import mammoth from "mammoth";
+import { loadDocuments } from "../lib/load-documents.js";
+import { chunkDocuments } from "../lib/chunk-documents.js";
+import { searchContext } from "../lib/search-context.js";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+let cachedChunks = null;
 
 export default async function handler(req, res) {
 
@@ -9,71 +15,63 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const { message } = req.body;
+
   try {
 
-    const { message } = req.body;
+    if (!cachedChunks) {
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+      const docs = await loadDocuments();
+      cachedChunks = chunkDocuments(docs);
 
-    let documents = "";
-
-    // ---------- READ PDF FILES ----------
-
-   const pdfFiles = [
-  "./documents/course_outline_2026.pdf",
-  "./documents/buyer_system_presentation.pdf",
-  "./documents/residential_condominium_contract.pdf",
-  "./documents/seller_system_presentation.pdf",
-  "./documents/shanae_job_description_2025.pdf"
-];
-
-    for (const file of pdfFiles) {
-      if (fs.existsSync(file)) {
-        const buffer = fs.readFileSync(file);
-        const data = await pdf(buffer);
-        documents += data.text + "\n\n";
-      }
     }
 
-    // ---------- READ DOCX FILES ----------
+    const context = searchContext(message, cachedChunks);
 
-    const docxFiles = [
-  "./documents/first_draft_emails.docx",
-];
-
-    for (const file of docxFiles) {
-      if (fs.existsSync(file)) {
-        const result = await mammoth.extractRawText({ path: file });
-        documents += result.value + "\n\n";
-      }
-    }
-
-    // ---------- OPENAI REQUEST ----------
-
-    const response = await openai.responses.create({
-      model: "gpt-5.2",
-      instructions: `
+    const systemPrompt = `
 You are BOB, the assistant for United DFW Properties / United Insight Realty.
 
-You answer questions from agents using ONLY the provided company documents.
+You help agents understand internal documents, procedures, and systems.
 
-If someone asks a legal question, instruct them to contact Brenda and provide her phone number.
+Rules:
+• Only answer using the company documents provided.
+• If information is missing say: "I cannot find that information in the provided documents."
+• Use clear headings, bullet points, and structured explanations when possible.
+• If the user asks a legal question, tell them to contact Brenda Cole.
 
-Be helpful, concise, and professional.
-`,
-      input: `
-Company Documents:
-${documents}
+Contact:
+Brenda Cole – 817-360-8499
+`;
 
-User Question:
-${message}
-`
+    const completion = await openai.chat.completions.create({
+
+      model: "gpt-4o-mini",
+
+      temperature: 0.2,
+
+      messages: [
+
+        {
+          role: "system",
+          content: systemPrompt
+        },
+
+        {
+          role: "system",
+          content: "Relevant document excerpts:\n" + context
+        },
+
+        {
+          role: "user",
+          content: message
+        }
+
+      ]
+
     });
 
     res.status(200).json({
-      reply: response.output_text
+      reply: completion.choices[0].message.content
     });
 
   } catch (error) {
