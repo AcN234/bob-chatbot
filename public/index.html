@@ -40,11 +40,6 @@ padding:20px;
 overflow-y:auto;
 }
 
-.message{
-margin-bottom:15px;
-line-height:1.6;
-}
-
 .user{
 text-align:right;
 color:#111;
@@ -95,6 +90,48 @@ animation-delay:0.4s;
 0%{opacity:0}
 50%{opacity:1}
 100%{opacity:0}
+}
+
+  .message{
+margin-bottom:18px;
+line-height:1.6;
+font-size:15px;
+}
+
+.user{
+text-align:right;
+}
+
+.user b{
+color:#111;
+}
+
+.bot{
+text-align:left;
+background:#f7f7f8;
+padding:12px 14px;
+border-radius:8px;
+border:1px solid #e5e5e5;
+}
+
+.bot b{
+color:#444;
+}
+
+.bot h1,
+.bot h2,
+.bot h3{
+margin-top:10px;
+margin-bottom:6px;
+}
+
+.bot ul{
+padding-left:20px;
+margin:8px 0;
+}
+
+.bot li{
+margin-bottom:5px;
 }
 </style>
 </head>
@@ -186,8 +223,23 @@ chatBox.scrollTop = chatBox.scrollHeight;
 function formatText(text){
 
 return text
+
+/* bold */
+.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+
+/* headings */
+.replace(/^### (.*$)/gim,"<h3>$1</h3>")
+.replace(/^## (.*$)/gim,"<h2>$1</h2>")
+.replace(/^# (.*$)/gim,"<h1>$1</h1>")
+
+/* bullet points */
+.replace(/^- (.*$)/gim,"<li>$1</li>")
+
+/* line breaks */
 .replace(/\n/g,"<br>")
-.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>");
+
+/* wrap list items */
+.replace(/(<li>.*<\/li>)/g,"<ul>$1</ul>");
 
 }
 
