@@ -42,7 +42,7 @@ overflow-y:auto;
 
 .message{
 margin-bottom:15px;
-line-height:1.5;
+line-height:1.6;
 }
 
 .user{
@@ -65,6 +65,7 @@ flex:1;
 padding:15px;
 border:none;
 font-size:16px;
+outline:none;
 }
 
 button{
@@ -101,20 +102,27 @@ BOB AI Assistant
 
 <script>
 
-async function sendMessage(){
-
 const input = document.getElementById("user-input");
 const chatBox = document.getElementById("chat-box");
 
-const message = input.value;
+input.addEventListener("keypress", function(e){
+if(e.key === "Enter"){
+sendMessage();
+}
+});
+
+async function sendMessage(){
+
+const message = input.value.trim();
 
 if(!message) return;
 
 chatBox.innerHTML += `<div class="message user"><b>You:</b> ${message}</div>`;
 
 input.value="";
-
 chatBox.scrollTop = chatBox.scrollHeight;
+
+try{
 
 const response = await fetch("/api/bob-chat",{
 method:"POST",
@@ -128,9 +136,27 @@ message:message
 
 const data = await response.json();
 
-chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> ${data.reply}</div>`;
+if(data.error){
+chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> Error: ${data.error}</div>`;
+}else{
+chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> ${formatText(data.reply)}</div>`;
+}
+
+}catch(error){
+
+chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> Server error. Please try again.</div>`;
+
+}
 
 chatBox.scrollTop = chatBox.scrollHeight;
+
+}
+
+function formatText(text){
+
+return text
+.replace(/\n/g,"<br>")
+.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>");
 
 }
 
