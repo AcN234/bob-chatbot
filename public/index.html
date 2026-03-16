@@ -79,7 +79,23 @@ cursor:pointer;
 button:hover{
 background:#333;
 }
+.typing span{
+animation: blink 1.4s infinite;
+}
 
+.typing span:nth-child(2){
+animation-delay:0.2s;
+}
+
+.typing span:nth-child(3){
+animation-delay:0.4s;
+}
+
+@keyframes blink{
+0%{opacity:0}
+50%{opacity:1}
+100%{opacity:0}
+}
 </style>
 </head>
 
@@ -122,6 +138,18 @@ chatBox.innerHTML += `<div class="message user"><b>You:</b> ${message}</div>`;
 input.value="";
 chatBox.scrollTop = chatBox.scrollHeight;
 
+/* typing indicator */
+
+const typingId = "typing-" + Date.now();
+
+chatBox.innerHTML += `
+<div class="message bot" id="${typingId}">
+<b>BOB:</b> <span class="typing">typing<span>.</span><span>.</span><span>.</span></span>
+</div>
+`;
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
 try{
 
 const response = await fetch("/api/bob-chat",{
@@ -136,15 +164,18 @@ message:message
 
 const data = await response.json();
 
+const typingElement = document.getElementById(typingId);
+
 if(data.error){
-chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> Error: ${data.error}</div>`;
+typingElement.innerHTML = `<b>BOB:</b> Error: ${data.error}`;
 }else{
-chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> ${formatText(data.reply)}</div>`;
+typingElement.innerHTML = `<b>BOB:</b> ${formatText(data.reply)}`;
 }
 
 }catch(error){
 
-chatBox.innerHTML += `<div class="message bot"><b>BOB:</b> Server error. Please try again.</div>`;
+const typingElement = document.getElementById(typingId);
+typingElement.innerHTML = `<b>BOB:</b> Server error. Please try again.`;
 
 }
 
