@@ -8,131 +8,119 @@
 <style>
 
 body{
-font-family: Arial, sans-serif;
-background:#f5f5f5;
 margin:0;
-padding:0;
+font-family:Inter, Arial, sans-serif;
+background:#f4f6f8;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
 .chat-container{
 width:100%;
-max-width:700px;
-margin:40px auto;
+max-width:800px;
+height:90vh;
 background:white;
-border-radius:10px;
-box-shadow:0 5px 20px rgba(0,0,0,0.1);
+border-radius:14px;
+box-shadow:0 15px 40px rgba(0,0,0,0.12);
 display:flex;
 flex-direction:column;
-height:80vh;
+overflow:hidden;
 }
 
 .header{
 background:#111;
 color:white;
-padding:15px;
+padding:18px 20px;
+font-weight:600;
 font-size:18px;
-border-radius:10px 10px 0 0;
 }
 
 .chat-box{
 flex:1;
 padding:20px;
 overflow-y:auto;
+background:#fafafa;
 }
 
-.user{
-text-align:right;
-color:#111;
+.message{
+display:flex;
+margin-bottom:18px;
 }
 
-.bot{
-text-align:left;
-color:#444;
+.message.user{
+justify-content:flex-end;
+}
+
+.message.bot{
+justify-content:flex-start;
+}
+
+.bubble{
+max-width:75%;
+padding:14px 16px;
+border-radius:12px;
+line-height:1.6;
+font-size:15px;
+}
+
+.user .bubble{
+background:#111;
+color:white;
+border-bottom-right-radius:4px;
+}
+
+.bot .bubble{
+background:white;
+border:1px solid #e6e6e6;
+border-bottom-left-radius:4px;
+}
+
+.bot h3{
+margin-top:10px;
+}
+
+.bot ul{
+padding-left:18px;
 }
 
 .input-area{
 display:flex;
 border-top:1px solid #eee;
+background:white;
+padding:10px;
 }
 
 input{
 flex:1;
-padding:15px;
-border:none;
-font-size:16px;
+padding:12px;
+border-radius:8px;
+border:1px solid #ddd;
+font-size:15px;
 outline:none;
 }
 
 button{
-padding:15px 20px;
+margin-left:10px;
 background:#111;
 color:white;
 border:none;
+padding:12px 18px;
+border-radius:8px;
 cursor:pointer;
+font-weight:500;
 }
 
 button:hover{
 background:#333;
 }
-.typing span{
-animation: blink 1.4s infinite;
+
+.typing{
+font-style:italic;
+color:#888;
 }
 
-.typing span:nth-child(2){
-animation-delay:0.2s;
-}
-
-.typing span:nth-child(3){
-animation-delay:0.4s;
-}
-
-@keyframes blink{
-0%{opacity:0}
-50%{opacity:1}
-100%{opacity:0}
-}
-
-  .message{
-margin-bottom:18px;
-line-height:1.6;
-font-size:15px;
-}
-
-.user{
-text-align:right;
-}
-
-.user b{
-color:#111;
-}
-
-.bot{
-text-align:left;
-background:#f7f7f8;
-padding:12px 14px;
-border-radius:8px;
-border:1px solid #e5e5e5;
-}
-
-.bot b{
-color:#444;
-}
-
-.bot h1,
-.bot h2,
-.bot h3{
-margin-top:10px;
-margin-bottom:6px;
-}
-
-.bot ul{
-padding-left:20px;
-margin:8px 0;
-}
-
-.bot li{
-margin-bottom:5px;
-}
 </style>
 </head>
 
@@ -147,7 +135,7 @@ BOB AI Assistant
 <div id="chat-box" class="chat-box"></div>
 
 <div class="input-area">
-<input id="user-input" placeholder="Ask a question..." />
+<input id="user-input" placeholder="Ask BOB a question..." />
 <button onclick="sendMessage()">Send</button>
 </div>
 
@@ -158,8 +146,8 @@ BOB AI Assistant
 const input = document.getElementById("user-input");
 const chatBox = document.getElementById("chat-box");
 
-input.addEventListener("keypress", function(e){
-if(e.key === "Enter"){
+input.addEventListener("keypress",function(e){
+if(e.key==="Enter"){
 sendMessage();
 }
 });
@@ -167,78 +155,95 @@ sendMessage();
 async function sendMessage(){
 
 const message = input.value.trim();
-
 if(!message) return;
 
-chatBox.innerHTML += `<div class="message user"><b>You:</b> ${message}</div>`;
+addMessage(message,"user");
 
 input.value="";
-chatBox.scrollTop = chatBox.scrollHeight;
 
-/* typing indicator */
-
-const typingId = "typing-" + Date.now();
-
-chatBox.innerHTML += `
-<div class="message bot" id="${typingId}">
-<b>BOB:</b> <span class="typing">typing<span>.</span><span>.</span><span>.</span></span>
-</div>
-`;
-
-chatBox.scrollTop = chatBox.scrollHeight;
+const typingId = addTyping();
 
 try{
 
-const response = await fetch("/api/bob-chat",{
+const res = await fetch("/api/bob-chat",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-message:message
-})
+body:JSON.stringify({message})
 });
 
-const data = await response.json();
+const data = await res.json();
 
-const typingElement = document.getElementById(typingId);
+removeTyping(typingId);
 
 if(data.error){
-typingElement.innerHTML = `<b>BOB:</b> Error: ${data.error}`;
+addMessage("Error: "+data.error,"bot");
 }else{
-typingElement.innerHTML = `<b>BOB:</b> ${formatText(data.reply)}`;
+addMessage(formatText(data.reply),"bot",true);
 }
 
-}catch(error){
+}catch(err){
 
-const typingElement = document.getElementById(typingId);
-typingElement.innerHTML = `<b>BOB:</b> Server error. Please try again.`;
+removeTyping(typingId);
+addMessage("Server error. Please try again.","bot");
 
 }
 
-chatBox.scrollTop = chatBox.scrollHeight;
+}
 
+function addMessage(text,type,html=false){
+
+const msg = document.createElement("div");
+msg.className="message "+type;
+
+const bubble = document.createElement("div");
+bubble.className="bubble";
+
+if(html){
+bubble.innerHTML=text;
+}else{
+bubble.textContent=text;
+}
+
+msg.appendChild(bubble);
+chatBox.appendChild(msg);
+
+chatBox.scrollTop=chatBox.scrollHeight;
+
+}
+
+function addTyping(){
+
+const id="typing-"+Date.now();
+
+const msg=document.createElement("div");
+msg.className="message bot";
+msg.id=id;
+
+msg.innerHTML=`<div class="bubble typing">BOB is typing...</div>`;
+
+chatBox.appendChild(msg);
+chatBox.scrollTop=chatBox.scrollHeight;
+
+return id;
+
+}
+
+function removeTyping(id){
+const el=document.getElementById(id);
+if(el) el.remove();
 }
 
 function formatText(text){
 
 return text
 
-/* bold */
 .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
-
-/* headings */
 .replace(/^### (.*$)/gim,"<h3>$1</h3>")
 .replace(/^## (.*$)/gim,"<h2>$1</h2>")
-.replace(/^# (.*$)/gim,"<h1>$1</h1>")
-
-/* bullet points */
 .replace(/^- (.*$)/gim,"<li>$1</li>")
-
-/* line breaks */
 .replace(/\n/g,"<br>")
-
-/* wrap list items */
 .replace(/(<li>.*<\/li>)/g,"<ul>$1</ul>");
 
 }
